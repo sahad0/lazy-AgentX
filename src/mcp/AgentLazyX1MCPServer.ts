@@ -7,13 +7,16 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { JiraAgent } from '../agents/jira/JiraAgent.js';
+import { AndroidReleaseAgent } from '../agents/android/AndroidAgent.js';
 
 export class AgentLazyX1MCPServer {
   private server!: Server;
   private jiraAgent: JiraAgent;
+  private androidReleaseAgent: AndroidReleaseAgent;
 
   constructor() {
     this.jiraAgent = new JiraAgent();
+    this.androidReleaseAgent = new AndroidReleaseAgent();
     this.initializeServer();
   }
 
@@ -100,6 +103,33 @@ export class AgentLazyX1MCPServer {
               },
             },
           },
+          {
+            name: 'android_release_agent',
+            description:
+              'Android release agent for executing build commands and yarn scripts. Runs terminal commands for Android development workflows with extended timeout for low-end devices. IMPORTANT: Set runGradleClean parameter to control clean step.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                command: {
+                  type: 'string',
+                  description:
+                    'The command to execute (e.g., "yarn build", "yarn android:release"). Use "android:release" for full Android release build workflow.',
+                },
+                projectPath: {
+                  type: 'string',
+                  description:
+                    'Optional project path (defaults to current directory)',
+                },
+                runGradleClean: {
+                  type: 'string',
+                  enum: ['yes', 'no', 'auto'],
+                  description:
+                    'Gradle clean control: "yes" = run gradlew clean (additional cache clearing), "no" = skip gradlew clean (default, faster), "auto" = default behavior (skips gradlew clean). Build folder deletion always happens.',
+                },
+              },
+              required: ['command'],
+            },
+          },
         ],
       };
     });
@@ -148,7 +178,17 @@ export class AgentLazyX1MCPServer {
         };
 
         try {
-          const response = await this.jiraAgent.advancedSearch(searchOptions);
+          // Convert search options to a query string
+          const queryParts = [];
+          if (searchOptions.text) queryParts.push(searchOptions.text);
+          if (searchOptions.assignee)
+            queryParts.push(`assigned to ${searchOptions.assignee}`);
+          if (searchOptions.status) queryParts.push(searchOptions.status);
+          if (searchOptions.priority) queryParts.push(searchOptions.priority);
+          if (searchOptions.issueType) queryParts.push(searchOptions.issueType);
+
+          const query = queryParts.join(' ');
+          const response = await this.jiraAgent.processQuery(query);
 
           return {
             content: [
@@ -166,6 +206,81 @@ export class AgentLazyX1MCPServer {
               {
                 type: 'text',
                 text: `Error processing advanced search: ${errorMessage}`,
+              },
+            ],
+          };
+        }
+      }
+
+      if (name === 'android_release_agent') {
+        const { command, projectPath, runGradleClean } = args as {
+          command: string;
+          projectPath?: string;
+          runGradleClean?: 'yes' | 'no' | 'auto';
+        };
+
+        try {
+          console.log(
+            `🚀 Starting Android release agent with command: ${command}`
+          );
+          console.log(`📁 Project path: ${projectPath || 'current directory'}`);
+          const cleanOption = runGradleClean || 'auto';
+          console.log(`🧹 Gradle clean option: ${cleanOption}`);
+
+          // Provide guidance to user about their choice
+          if (cleanOption === 'auto') {
+            console.log(
+              `ℹ️ Using default behavior - Skipping gradlew clean (build folder deletion provides clean build)`
+            );
+            console.log(
+              `💡 Tip: Use runGradleClean: "yes" for additional gradlew clean cache clearing`
+            );
+          } else if (cleanOption === 'yes') {
+            console.log(
+              `✅ User chose to run gradlew clean (additional cache clearing)`
+            );
+          } else if (cleanOption === 'no') {
+            console.log(`⏭️ User chose to skip gradlew clean (faster build)`);
+            console.log(
+              `ℹ️ Build folder deletion still provides clean build artifacts`
+            );
+          }
+
+          let response: string;
+
+          // Check if this is the special Android release build command
+          if (command === 'android:release') {
+            console.log(`📱 Detected Android release build command`);
+            // Convert runGradleClean to boolean for the agent
+            // Default behavior (auto) now skips gradlew clean, only run when explicitly "yes"
+            const skipClean = runGradleClean !== 'yes';
+            response = await this.androidReleaseAgent.buildAndroidRelease(
+              projectPath,
+              skipClean
+            );
+          } else {
+            response = await this.androidReleaseAgent.processCommand(
+              command,
+              projectPath
+            );
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: response,
+              },
+            ],
+          };
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error processing Android command: ${errorMessage}`,
               },
             ],
           };

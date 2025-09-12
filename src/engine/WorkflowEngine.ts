@@ -8,6 +8,7 @@ import type {
 } from '../types/index.js';
 import { BaseNode } from '../nodes/BaseNode.js';
 import { JiraNode } from '../nodes/jira/JiraNode.js';
+import { AndroidNode } from '../nodes/android/AndroidNode.js';
 
 type NodeConstructor = new (
   node: WorkflowNode,
@@ -19,6 +20,7 @@ export class WorkflowEngine {
 
   constructor() {
     this.registerNode('jira', JiraNode);
+    this.registerNode('android', AndroidNode);
   }
 
   registerNode(type: string, nodeClass: NodeConstructor): void {
