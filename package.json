@@ -1,0 +1,35 @@
+{
+  "name": "agent-lazy-x1",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "mcp": "tsx agent-lazy-x1.mts",
+    "format": "prettier --write .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx --watch agent-lazy-x1.mts",
+    "build": "tsc",
+    "start": "node dist/agent-lazy-x1.js",
+    "langgraph:start": "langgraph-api start",
+    "langgraph:dev": "langgraph-api dev"
+  },
+  "keywords": [
+    "agent"
+  ],
+  "author": "sahad0",
+  "license": "MIT",
+  "description": "AgentLazyX1 - Generic agent framework with LangGraph and MCP SDK",
+  "dependencies": {
+    "@langchain/core": "^0.3.75",
+    "@langchain/google-genai": "^0.2.17",
+    "@langchain/langgraph": "^0.4.9",
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "prettier": "^3.2.5"
+  }
+}

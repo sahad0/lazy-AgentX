@@ -1,0 +1,9 @@
+{
+  "graphs": {
+    "jira_agent": {
+      "path": "./src/agents/jira/JiraAgent.ts:graph",
+      "description": "Jira agent powered by AgentLazyX1 framework"
+    }
+  },
+  "env": ".env"
+}
