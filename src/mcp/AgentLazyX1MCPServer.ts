@@ -8,15 +8,18 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { JiraAgent } from '../agents/jira/JiraAgent.js';
 import { AndroidReleaseAgent } from '../agents/android/AndroidAgent.js';
+import { GoogleDriveAgent } from '../agents/google/GoogleDriveAgent.js';
 
 export class AgentLazyX1MCPServer {
   private server!: Server;
   private jiraAgent: JiraAgent;
   private androidReleaseAgent: AndroidReleaseAgent;
+  private googleDriveAgent: GoogleDriveAgent;
 
   constructor() {
     this.jiraAgent = new JiraAgent();
     this.androidReleaseAgent = new AndroidReleaseAgent();
+    this.googleDriveAgent = new GoogleDriveAgent();
     this.initializeServer();
   }
 
@@ -128,6 +131,36 @@ export class AgentLazyX1MCPServer {
                 },
               },
               required: ['command'],
+            },
+          },
+          {
+            name: 'google_drive_upload',
+            description:
+              'Upload files to Google Drive with real-time progress tracking. Supports both small and large files with automatic optimization. Returns public sharing URLs for immediate access.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                filePath: {
+                  type: 'string',
+                  description: 'Local file path to upload to Google Drive',
+                },
+                folderId: {
+                  type: 'string',
+                  description:
+                    'Google Drive folder ID to upload to (optional, uses GOOGLE_DRIVE_FOLDER_ID env var if not specified)',
+                },
+                fileName: {
+                  type: 'string',
+                  description:
+                    'Custom name for the file in Google Drive (optional, defaults to original filename)',
+                },
+                enableProgress: {
+                  type: 'boolean',
+                  description:
+                    'Enable progress tracking for large file uploads (default: true)',
+                },
+              },
+              required: ['filePath'],
             },
           },
         ],
@@ -281,6 +314,54 @@ export class AgentLazyX1MCPServer {
               {
                 type: 'text',
                 text: `Error processing Android command: ${errorMessage}`,
+              },
+            ],
+          };
+        }
+      }
+
+      if (name === 'google_drive_upload') {
+        const { filePath, folderId, fileName, enableProgress } = args as {
+          filePath: string;
+          folderId?: string;
+          fileName?: string;
+          enableProgress?: boolean;
+        };
+
+        try {
+          const response = await this.googleDriveAgent.uploadFile(
+            filePath,
+            folderId,
+            fileName,
+            enableProgress
+              ? (progress) => {
+                  const speedMB =
+                    Math.round((progress.speed / 1024 / 1024) * 100) / 100;
+                  const etaMinutes =
+                    Math.round((progress.eta / 60) * 100) / 100;
+                  console.log(
+                    `📊 Upload progress: ${progress.percentage.toFixed(1)}% - ${speedMB}MB/s - ETA: ${etaMinutes}m`
+                  );
+                }
+              : undefined
+          );
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: response,
+              },
+            ],
+          };
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error uploading file to Google Drive: ${errorMessage}`,
               },
             ],
           };

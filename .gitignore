@@ -22,3 +22,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Google Service Account credentials
+drive-agent-service.json

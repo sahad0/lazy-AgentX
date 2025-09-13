@@ -1,6 +1,6 @@
-# Premium LangGraph + MCP SDK Architecture
+# AgentLazyX1 - Multi-Agent MCP Server
 
-A production-ready Model Context Protocol (MCP) server that provides intelligent Jira integration through LangGraph agents and n8n-style workflow engine.
+A production-ready Model Context Protocol (MCP) server that provides intelligent automation through specialized agents: Jira, Android Release, and Google Drive integration with LangGraph agents and n8n-style workflow engine.
 
 ## 🏗️ Premium Architecture
 
@@ -9,16 +9,31 @@ This project implements enterprise-grade patterns following LangGraph and MCP SD
 ```
 src/
 ├── agents/          # LangGraph agents (core intelligence)
-│   └── JiraAgent.ts # Main Jira agent with workflow integration
+│   ├── jira/        # Jira integration agent
+│   │   └── JiraAgent.ts
+│   ├── android/     # Android release automation agent
+│   │   └── AndroidAgent.ts
+│   └── google/      # Google Drive integration agent
+│       └── GoogleDriveAgent.ts
 ├── mcp/             # MCP server implementation
-│   └── JiraMCPServer.ts # Exposes LangGraph agents as MCP tools
+│   └── AgentLazyX1MCPServer.ts # Exposes all agents as MCP tools
 ├── nodes/           # Workflow node implementations
 │   ├── BaseNode.ts  # Base class for all nodes
-│   └── JiraNode.ts  # Jira-specific node
+│   ├── jira/        # Jira-specific nodes
+│   │   └── JiraNode.ts
+│   ├── android/     # Android-specific nodes
+│   │   └── AndroidNode.ts
+│   └── google/      # Google Drive-specific nodes
+│       └── GoogleDriveNode.ts
 ├── engine/          # Workflow execution engine
 │   └── WorkflowEngine.ts
 ├── workflows/       # Predefined workflow definitions
-│   └── jira-workflow.ts
+│   ├── jira/        # Jira workflows
+│   │   └── jira-workflow.ts
+│   ├── android/     # Android workflows
+│   │   └── android-workflow.ts
+│   └── google/      # Google Drive workflows
+│       └── google-drive-workflow.ts
 └── types/           # Type definitions for workflow system
     └── index.ts
 ```
@@ -31,6 +46,10 @@ src/
 - **Enterprise Ready**: Production-grade architecture patterns
 - **TypeScript**: Full type safety and modern development experience
 - **Cursor Integration**: Seamless integration with Cursor IDE
+- **Multi-Agent Support**: Jira, Android Release, and Google Drive agents
+- **Large File Handling**: Streaming uploads for files 100MB+ with progress tracking
+- **Service Account Authentication**: Secure Google Drive integration with service accounts
+- **Build Automation**: Complete Android release pipeline with intelligent error handling
 
 ## 🎯 Architecture Benefits
 
@@ -58,10 +77,41 @@ src/
 
 ```bash
 # Required environment variables
+
+# Jira Configuration
 export JIRA_DOMAIN="https://your-domain.atlassian.net"
 export JIRA_EMAIL="your-email@company.com"
 export JIRA_API_TOKEN="your-jira-api-token"
+
+# Google Drive Configuration (Service Account)
+export GOOGLE_SERVICE_ACCOUNT_PATH="./drive-agent-service.json"
+export GOOGLE_DRIVE_FOLDER_ID="your-shared-drive-folder-id"
 ```
+
+### Google Drive Setup
+
+For Google Drive integration, you need to set up a service account:
+
+1. **Create Service Account**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing
+   - Enable Google Drive API
+   - Create a service account
+   - Download the JSON key file as `drive-agent-service.json`
+
+2. **Configure Shared Drive**:
+   - Create a Google Shared Drive (required for service accounts)
+   - Share the folder with your service account email
+   - Give Editor permissions to the service account
+   - Copy the folder ID from the URL
+
+3. **Environment Variables**:
+   ```bash
+   export GOOGLE_SERVICE_ACCOUNT_PATH="./drive-agent-service.json"
+   export GOOGLE_DRIVE_FOLDER_ID="0ACgT3D-lOrnbUk9PVA"  # Your shared drive folder ID
+   ```
+
+See `GOOGLE_DRIVE_SETUP.md` for detailed setup instructions.
 
 ### Running the System
 
@@ -81,12 +131,98 @@ yarn langgraph:dev
 
 ### Cursor Integration
 
-The MCP server exposes a `jira_agent` tool that provides:
+The MCP server exposes multiple specialized tools:
+
+## 🤖 Available Agents & APIs
+
+### 1. Jira Agent
+
+**Tools**: `jira_agent`, `jira_advanced_search`
+
+**Capabilities**:
 
 - **Intelligent Jira Queries**: Natural language processing of Jira requests
 - **Workflow Execution**: n8n-style workflow processing
 - **AI-Enhanced Responses**: Context-aware ticket summaries
 - **Multi-format Support**: Handles ticket keys, URLs, and descriptions
+- **Advanced Search**: Filter by assignee, status, priority, issue type, project
+
+**API Parameters**:
+
+```typescript
+// jira_agent
+{ query: string }
+
+// jira_advanced_search
+{
+  text?: string,           // Search text
+  assignee?: string,       // Filter by assignee
+  status?: string,         // Filter by status
+  priority?: string,       // Filter by priority
+  issueType?: string,      // Filter by issue type
+  project?: string,        // Filter by project
+  maxResults?: number      // Max results (default: 10)
+}
+```
+
+### 2. Android Release Agent
+
+**Tool**: `android_release_agent`
+
+**Capabilities**:
+
+- **Build Automation**: Automated Android release builds
+- **Error Analysis**: Intelligent error detection with solutions
+- **Progress Tracking**: Real-time build progress monitoring
+- **Clean Build Management**: Smart cache clearing and build folder management
+- **Extended Timeout**: Optimized for low-end devices
+
+**API Parameters**:
+
+```typescript
+{
+  command: string,                    // Required: Command to execute
+  projectPath?: string,               // Optional: Project path
+  runGradleClean?: 'yes'|'no'|'auto' // Gradle clean control
+}
+```
+
+**Special Commands**:
+
+- `android:release` - Full Android release build workflow
+- `yarn build` - Standard build command
+- `yarn android:release` - Android-specific release
+
+### 3. Google Drive Agent
+
+**Tool**: `google_drive_upload`
+
+**Capabilities**:
+
+- **Large File Uploads**: Streaming uploads for files 100MB+ with resumable upload
+- **Progress Tracking**: Real-time upload progress with speed and ETA
+- **Memory Efficient**: Uses streaming to avoid loading entire files into memory
+- **Service Account Auth**: Secure authentication with Google service accounts
+- **Public Sharing**: Automatic public sharing permissions
+- **File Replacement**: Smart handling of existing files
+
+**API Parameters**:
+
+```typescript
+{
+  filePath: string,        // Required: Local file path
+  folderId?: string,       // Optional: Google Drive folder ID
+  fileName?: string,       // Optional: Custom file name
+  enableProgress?: boolean // Optional: Enable progress tracking
+}
+```
+
+**Features**:
+
+- **Automatic Optimization**: Chooses simple vs resumable upload based on file size
+- **Progress Tracking**: Real-time upload progress with speed and ETA
+- **Public URLs**: Returns both direct and sharing links
+- **Error Handling**: Comprehensive error messages with solutions
 
 ## 🏭 Production Deployment
 
@@ -138,6 +274,9 @@ yarn langgraph:start
 - **Enterprise Integrations**: GitHub, Slack, email, CRM systems
 - **Real-time Monitoring**: Workflow execution tracking and analytics
 - **Custom Node Marketplace**: Community-driven node ecosystem
+- **Google Drive List/Download**: File listing and download capabilities
+- **Android Build Variants**: Support for different build flavors and variants
+- **Jira Webhook Integration**: Real-time ticket updates and notifications
 
 ## 🛠️ Development
 
