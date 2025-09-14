@@ -24,4 +24,4 @@ tmp/
 temp/
 
 # Google Service Account credentials
-drive-agent-service.json
+service.json

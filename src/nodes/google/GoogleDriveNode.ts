@@ -90,7 +90,7 @@ export class GoogleDriveNode extends BaseNode {
               type: 'string',
               required: false,
               description:
-                'Path to service account JSON file (defaults to ./drive-agent-service.json)',
+                'Path to service account JSON file (defaults to ./service.json)',
             },
             {
               displayName: 'Folder ID',

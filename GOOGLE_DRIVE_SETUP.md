@@ -37,7 +37,7 @@ export GOOGLE_DRIVE_FOLDER_ID="your-folder-id"
    - Click on the service account
    - Go to "Keys" tab
    - Click "Add Key" > "Create new key" > JSON
-   - Save as `drive-agent-service.json` in project root
+   - Save as `service.json` in project root
 
 ### 3. Shared Drive Setup (Recommended)
 

@@ -86,6 +86,9 @@ export JIRA_API_TOKEN="your-jira-api-token"
 # Google Drive Configuration (Service Account)
 export GOOGLE_SERVICE_ACCOUNT_PATH="./drive-agent-service.json"
 export GOOGLE_DRIVE_FOLDER_ID="your-shared-drive-folder-id"
+
+# Google Chat Configuration (Optional - for default space)
+export GCHAT_SPACE_ID="spaces/your-google-chat-space-id"
 ```
 
 ### Google Drive Setup
@@ -113,6 +116,35 @@ For Google Drive integration, you need to set up a service account:
 
 See `GOOGLE_DRIVE_SETUP.md` for detailed setup instructions.
 
+### Google Chat Setup
+
+For Google Chat integration, you need to set up a service account and configure the space:
+
+1. **Service Account Setup** (same as Google Drive):
+   - Use the same service account JSON file (service.json) as Google Drive
+   - Ensure the service account has Google Chat API access
+
+2. **Add Bot to Google Chat Space**:
+   - Open your Google Chat space
+   - Click on the space name → "Manage webhooks and apps"
+   - Add the service account email as a bot
+   - Give it appropriate permissions
+
+3. **Get Space ID**:
+   - Open the Google Chat space in your browser
+   - Copy the space ID from the URL: `https://chat.google.com/room/XXXXXXXXX`
+   - The space ID format is: `spaces/XXXXXXXXX`
+
+4. **Environment Variables**:
+
+   ```bash
+   export GCHAT_SPACE_ID="spaces/your-google-chat-space-id"
+   ```
+
+5. **Usage**:
+   - With default space: `Send message 'Hello World'`
+   - With specific space: `Send message 'Hello World' to space spaces/abc123`
+
 ### Running the System
 
 ```bash
@@ -122,12 +154,38 @@ yarn dev
 # Production MCP server
 yarn mcp
 
+# Production build and start
+yarn build
+yarn start:prod
+
 # LangGraph API server (alternative deployment)
 yarn langgraph:start
 
 # Development LangGraph server
 yarn langgraph:dev
 ```
+
+### Production Deployment
+
+1. **Environment Setup**:
+
+   ```bash
+   cp env.example .env
+   # Edit .env with your production values
+   export NODE_ENV=production
+   ```
+
+2. **Build and Deploy**:
+
+   ```bash
+   yarn build
+   yarn start:prod
+   ```
+
+3. **Health Monitoring**:
+   - Health checks run every 5 minutes in production
+   - Monitor logs for uptime and error messages
+   - All agents include basic error handling and logging
 
 ### Cursor Integration
 
@@ -193,7 +251,46 @@ The MCP server exposes multiple specialized tools:
 - `yarn build` - Standard build command
 - `yarn android:release` - Android-specific release
 
-### 3. Google Drive Agent
+### 3. Google Chat Agent
+
+**Tool**: `google_chat_agent`
+
+**Capabilities**:
+
+- **Text Messaging**: Send messages to Google Chat spaces
+- **User Mentions**: Tag specific users by name or email
+- **URL Attachments**: Include links with custom display text
+- **Default Space**: Configure a default space for easy messaging
+- **Enhanced Features**: Support for @all mentions and thread replies
+
+**API Parameters**:
+
+```typescript
+{
+  query: string; // Natural language query for sending messages
+}
+```
+
+**Query Examples**:
+
+```typescript
+// Simple message to default space
+"Send message 'Hello World'";
+
+// Message to specific space
+"Send message 'Hello World' to space spaces/abc123";
+
+// Message with user mentions
+"Send message 'Hello team' tag users 'john, jane'";
+
+// Message with URL
+"Send message 'Check this out' url 'https://example.com' url text 'Example Link'";
+
+// Message with @all mention
+"Send message 'Important update' tag all";
+```
+
+### 4. Google Drive Agent
 
 **Tool**: `google_drive_upload`
 

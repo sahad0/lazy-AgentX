@@ -24,7 +24,7 @@ export class GoogleDriveAgent {
     try {
       // Load service account credentials with modern error handling
       const serviceAccountPath =
-        process.env.GOOGLE_SERVICE_ACCOUNT_PATH || './drive-agent-service.json';
+        process.env.GOOGLE_SERVICE_ACCOUNT_PATH || './service.json';
 
       if (!fs.existsSync(serviceAccountPath)) {
         throw new Error(

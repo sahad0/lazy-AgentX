@@ -9,17 +9,20 @@ import {
 import { JiraAgent } from '../agents/jira/JiraAgent.js';
 import { AndroidReleaseAgent } from '../agents/android/AndroidAgent.js';
 import { GoogleDriveAgent } from '../agents/google/GoogleDriveAgent.js';
+import { GoogleChatAgent } from '../agents/google/GoogleChatAgent.js';
 
 export class AgentLazyX1MCPServer {
   private server!: Server;
   private jiraAgent: JiraAgent;
   private androidReleaseAgent: AndroidReleaseAgent;
   private googleDriveAgent: GoogleDriveAgent;
+  private googleChatAgent: GoogleChatAgent;
 
   constructor() {
     this.jiraAgent = new JiraAgent();
     this.androidReleaseAgent = new AndroidReleaseAgent();
     this.googleDriveAgent = new GoogleDriveAgent();
+    this.googleChatAgent = new GoogleChatAgent();
     this.initializeServer();
   }
 
@@ -161,6 +164,22 @@ export class AgentLazyX1MCPServer {
                 },
               },
               required: ['filePath'],
+            },
+          },
+          {
+            name: 'google_chat_agent',
+            description:
+              'Google Chat agent powered by AgentLazyX1. Can send text messages to Google Chat spaces using modern Google Chat API. Supports natural language input, user mentions, URL attachments, and @all mentions.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: {
+                  type: 'string',
+                  description:
+                    'Your request for Google Chat operations. Supports natural language: "send [message] to [user]" or "Send message \'Hello World\' to space spaces/abc123". Can include URLs, user mentions, and @all tags.',
+                },
+              },
+              required: ['query'],
             },
           },
         ],
@@ -368,6 +387,34 @@ export class AgentLazyX1MCPServer {
         }
       }
 
+      if (name === 'google_chat_agent') {
+        const { query } = args as { query: string };
+
+        try {
+          const response = await this.googleChatAgent.processQuery(query);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: response,
+              },
+            ],
+          };
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error with Google Chat agent: ${errorMessage}`,
+              },
+            ],
+          };
+        }
+      }
+
       throw new Error(`Unknown tool: ${name}`);
     });
   }
@@ -376,5 +423,26 @@ export class AgentLazyX1MCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('AgentLazyX1 MCP server running on stdio');
+
+    // Simple health check
+    this.setupHealthCheck();
+  }
+
+  private setupHealthCheck() {
+    // Basic health monitoring
+    const startTime = Date.now();
+    const healthCheck = () => {
+      const uptime = Date.now() - startTime;
+      if (process.env.NODE_ENV === 'production') {
+        console.error(
+          `Health check: Server running for ${Math.floor(uptime / 1000)}s`
+        );
+      }
+    };
+
+    // Health check every 5 minutes in production
+    if (process.env.NODE_ENV === 'production') {
+      setInterval(healthCheck, 5 * 60 * 1000);
+    }
   }
 }

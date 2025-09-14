@@ -28,8 +28,7 @@ export const createGoogleDriveUploadWorkflow = (
         credentials: {
           googleDriveServiceAccount: {
             serviceAccountPath:
-              process.env.GOOGLE_SERVICE_ACCOUNT_PATH ||
-              './drive-agent-service.json',
+              process.env.GOOGLE_SERVICE_ACCOUNT_PATH || './service.json',
             folderId: process.env.GOOGLE_DRIVE_FOLDER_ID,
           },
         },
@@ -64,8 +63,7 @@ export const createGoogleDriveListWorkflow = (
         credentials: {
           googleDriveServiceAccount: {
             serviceAccountPath:
-              process.env.GOOGLE_SERVICE_ACCOUNT_PATH ||
-              './drive-agent-service.json',
+              process.env.GOOGLE_SERVICE_ACCOUNT_PATH || './service.json',
             folderId: process.env.GOOGLE_DRIVE_FOLDER_ID,
           },
         },
@@ -108,8 +106,7 @@ export const createGoogleDriveLargeFileUploadWorkflow = (
         credentials: {
           googleDriveServiceAccount: {
             serviceAccountPath:
-              process.env.GOOGLE_SERVICE_ACCOUNT_PATH ||
-              './drive-agent-service.json',
+              process.env.GOOGLE_SERVICE_ACCOUNT_PATH || './service.json',
             folderId: process.env.GOOGLE_DRIVE_FOLDER_ID,
           },
         },

@@ -10,8 +10,11 @@
     "dev": "tsx --watch agent-lazy-x1.mts",
     "build": "tsc",
     "start": "node dist/agent-lazy-x1.js",
+    "start:prod": "NODE_ENV=production node dist/agent-lazy-x1.js",
     "langgraph:start": "langgraph-api start",
-    "langgraph:dev": "langgraph-api dev"
+    "langgraph:dev": "langgraph-api dev",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
   },
   "keywords": [
     "agent"
